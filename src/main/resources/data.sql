@@ -27,3 +27,5 @@ VALUES (1,  'john.doe@example.com','John Doe', 50000);
 -- Insert into wallet table
 INSERT INTO wallet (id, balance, currency, user_id)
 VALUES (1, 50000, 'USDT', 1);
+INSERT INTO wallet (id, balance, currency, user_id)
+VALUES (2, 0, 'EURT', 1);

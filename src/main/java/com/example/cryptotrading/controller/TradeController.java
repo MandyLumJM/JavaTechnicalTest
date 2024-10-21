@@ -1,9 +1,12 @@
 package com.example.cryptotrading.controller;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,10 +18,12 @@ import com.example.cryptotrading.model.TradeRequest;
 import com.example.cryptotrading.service.TradeService;
 import com.example.cryptotrading.service.impl.PriceServiceImpl;
 
-
+/*
+ * Process Trade API
+ */
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/trade")
 public class TradeController {
     private static final Logger logger = LoggerFactory.getLogger(TradeController.class);
     
@@ -28,10 +33,17 @@ public class TradeController {
 	
 	@PostMapping("/processtrade")
     public ResponseEntity<Trade> processTrade(@RequestParam Long userId, @RequestBody TradeRequest tradeRequest) {
-		  logger.info("TradeController Entering processTrade...");
+		logger.info("TradeController Entering processTrade...");
         Trade savedTrade = tradeService.processTrade(userId, tradeRequest);
-      
+		
         return ResponseEntity.ok(savedTrade);
+    }
+	
+	@GetMapping("/history")
+	public ResponseEntity<List<Trade>> fetchTradeHistory(@RequestParam Long userId) {
+		logger.info("TradeController Entering fetchTradeHistory...");
+		List<Trade> tradeList = tradeService.fetchTradeHistory(userId);
+        return ResponseEntity.ok(tradeList);
     }
 
 }

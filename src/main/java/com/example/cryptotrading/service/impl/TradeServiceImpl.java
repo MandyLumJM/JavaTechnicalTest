@@ -2,6 +2,7 @@ package com.example.cryptotrading.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,9 +29,7 @@ import com.example.cryptotrading.repository.TradeRepository;
 import com.example.cryptotrading.repository.UserRepository;
 import com.example.cryptotrading.repository.WalletRepository;
 
-/*
- * Trade Execution logic (BUY/SELL) with latest price 
- */
+
 
 @Service
 public class TradeServiceImpl implements TradeService {
@@ -50,6 +49,9 @@ public class TradeServiceImpl implements TradeService {
 	@Autowired
 	private PriceRepository priceRepository; // Inject the PriceRepository
 
+	/*
+	 * Trade Execution logic (BUY/SELL) with latest price 
+	 */
 	@Transactional
 	@Override
 	public Trade processTrade(Long userId, TradeRequest tradeRequest) {
@@ -106,7 +108,8 @@ public class TradeServiceImpl implements TradeService {
 			} else {
 				throw new CustomException("Failed to save the trade. Transaction aborted.");
 			}
-
+			logger.info("TradeServiceImpl Exiting processTrade >>> {} {} ", tradeRequest.getTradeType(), tradeRequest.getCurrency());
+			
 			return savedTrade;
 
 		} catch (DataIntegrityViolationException e) {
@@ -120,7 +123,18 @@ public class TradeServiceImpl implements TradeService {
 
 	private double determineTradePrice(String tradeType, Price latestPrice) {
 		logger.info("TradeServiceImpl determineTradePrice >>> {} {} ", tradeType, latestPrice);
-
 		return tradeType.equalsIgnoreCase("buy") ? latestPrice.getAskPrice() : latestPrice.getBidPrice();
 	}
+
+	/*
+	 * Fetch Trades
+	 */
+	@Override
+	public List<Trade> fetchTradeHistory(Long userId) {
+		
+		List<Trade> tradeList = tradeRepository.findByUserId(userId);
+		return tradeList;
+	}
+	
+	
 }
