@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 public class PriceServiceImpl implements PriceService {
 	
 		
-    private static final Logger logger = LoggerFactory.getLogger(PriceService.class);
+    private static final Logger logger = LoggerFactory.getLogger(PriceServiceImpl.class);
 
     
 	@Autowired
