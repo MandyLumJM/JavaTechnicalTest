@@ -10,9 +10,6 @@ public class Price {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-
-	@Column(name = "exchange", nullable = false)
-	private String exchange;
 	
 	@Column(name = "tradePair", nullable = false)
 	private String tradePair;
@@ -32,14 +29,6 @@ public class Price {
 
 	public void setId(Long id) {
 		this.id = id;
-	}
-
-	public String getExchange() {
-		return exchange;
-	}
-
-	public void setExchange(String exchange) {
-		this.exchange = exchange;
 	}
 
 	public String getTradePair() {
@@ -74,21 +63,20 @@ public class Price {
 		this.timestamp = timestamp;
 	}
 
+
 	@Override
 	public String toString() {
-		return "Price [id=" + id + ", exchange=" + exchange + ", tradePair=" + tradePair + ", bidPrice=" + bidPrice
-				+ ", askPrice=" + askPrice + ", timestamp=" + timestamp + "]";
+		return "Price [id=" + id + ", tradePair=" + tradePair + ", bidPrice=" + bidPrice + ", askPrice=" + askPrice
+				+ ", timestamp=" + timestamp + "]";
 	}
 
-	public Price(String exchange, String tradePair, Double bidPrice, Double askPrice) {
-		this.exchange = exchange;
+	public Price(String tradePair, Double bidPrice, Double askPrice) {
 		this.tradePair = tradePair;
 		this.bidPrice = bidPrice;
 		this.askPrice = askPrice;
 	}
 
 	public Price() {
-		// TODO Auto-generated constructor stub
+		
 	}
-
 }

@@ -2,6 +2,7 @@ package com.example.cryptotrading.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,10 +51,11 @@ public class TradeServiceImpl implements TradeService {
 	public Trade processTrade(Long userId, TradeRequest tradeRequest) {
 		logger.info("TradeServiceImpl Entering processTrade >>> TradeType = {} Based = {} Quote = {} ", tradeRequest.getTradeType(), tradeRequest.getBaseCurrency(),tradeRequest.getQuoteCurrency());
 
-		try {
+		try {	
 
 			Price latestPrice = priceRepository.findTopByTradePairOrderByTimestampDesc(tradeRequest.getTradePair())
 					.orElseThrow(() -> new CustomException("Latest price for trade pair not available."));
+		
 
 			User user = userRepository.findById(userId).orElseThrow(() -> new CustomException("User not found."));
 
@@ -116,13 +118,12 @@ public class TradeServiceImpl implements TradeService {
 			if (savedTrade.getTradeType().equalsIgnoreCase("buy")) {
 				baseCurrency.setBalance(baseCurrency.getBalance() + tradeRequest.getAmount());
 				quoteCurrency.setBalance(quoteCurrency.getBalance() - totalTradeCost);
-				
-				user.setWalletBalance(user.getWalletBalance() - totalTradeCost);
+				user.setWalletBalance(calculateUserBalance(user.getId()));
 				
 			} else if (savedTrade.getTradeType().equalsIgnoreCase("sell")) {
 				baseCurrency.setBalance(baseCurrency.getBalance() - tradeRequest.getAmount());
 				quoteCurrency.setBalance(quoteCurrency.getBalance() + totalTradeCost);
-				user.setWalletBalance(user.getWalletBalance() + totalTradeCost);
+				user.setWalletBalance(calculateUserBalance(user.getId()));
 				
 			}
 			walletRepository.save(quoteCurrency);
@@ -132,6 +133,30 @@ public class TradeServiceImpl implements TradeService {
 		} else {
 			throw new CustomException("Failed to save the trade. Transaction aborted.");
 		}
+	}
+	
+	private double calculateUserBalance(Long userId) {
+		Price currentBtcPrice = priceRepository.findTopByTradePairOrderByTimestampDesc("BTCUSDT")
+				.orElseThrow(() -> new CustomException("Latest price for trade pair not available."));
+		Price currentEthPrice  = priceRepository.findTopByTradePairOrderByTimestampDesc("ETHUSDT")
+				.orElseThrow(() -> new CustomException("Latest price for trade pair not available."));
+		
+		Optional<Wallet> btcUnits = walletRepository.findByUserIdAndCurrency(userId,"BTC");
+		Optional<Wallet> ethUnits = walletRepository.findByUserIdAndCurrency(userId,"ETH");
+		Optional<Wallet> usdtUnits = walletRepository.findByUserIdAndCurrency(userId,"USDT");
+		
+		
+	
+		
+		double totalBTCInUSDT = btcUnits.get().getBalance() * currentBtcPrice.getBidPrice();
+		double totalETHInUSDT = ethUnits.get().getBalance() * currentEthPrice.getBidPrice();
+		
+		logger.info("TradeServiceImpl totalBTCInUSDT {} >>>>>>", totalBTCInUSDT );
+		logger.info("TradeServiceImpl totalETHInUSDT {} {}>>>>>>", totalETHInUSDT, ethUnits.get().getBalance());
+		
+		double totalBalance = usdtUnits.get().getBalance() + totalBTCInUSDT + totalETHInUSDT;
+		
+		return totalBalance;
 	}
 
 	@Override

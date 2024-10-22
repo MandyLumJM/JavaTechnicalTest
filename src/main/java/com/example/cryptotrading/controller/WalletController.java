@@ -15,7 +15,7 @@ import com.example.cryptotrading.model.Wallet;
 import com.example.cryptotrading.service.WalletService;
 
 /*
- * Fetch Wallet Details API
+ * Task 4: retrieve the user’s crypto currencies wallet balance
  */
 
 @RestController

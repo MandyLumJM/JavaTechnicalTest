@@ -9,6 +9,10 @@ import org.springframework.web.bind.annotation.*;
 import com.example.cryptotrading.model.Price;
 import com.example.cryptotrading.service.PriceService;
 
+/*
+ *  Task 2: retrieve the latest best aggregated price.
+ */
+
 @RestController
 @RequestMapping("/api")
 public class PriceController {

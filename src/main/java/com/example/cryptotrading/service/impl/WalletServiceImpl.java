@@ -21,7 +21,7 @@ public class WalletServiceImpl implements WalletService {
 
 	@Override
 	public List<Wallet> getWalletBalance(Long userId) {
-		logger.info("WalletServiceImpl Fetching getWalletBalance >>> {} {} ", userId);
+		logger.info("WalletServiceImpl Fetching getWalletBalance >>> {}", userId);
 
 		return walletRepository.findByUserId(userId);
 	}

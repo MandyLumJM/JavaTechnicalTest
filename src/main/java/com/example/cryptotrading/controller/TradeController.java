@@ -18,7 +18,9 @@ import com.example.cryptotrading.model.TradeRequest;
 import com.example.cryptotrading.service.TradeService;
 
 /*
- * Process Trade API
+ *  Task 3 & 5
+ *  allows users to trade based on the latest best aggregated price.
+ *  the user trading history.
  */
 
 @RestController

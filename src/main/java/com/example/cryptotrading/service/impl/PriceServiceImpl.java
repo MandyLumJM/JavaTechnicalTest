@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -13,6 +12,7 @@ import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import com.example.cryptotrading.Exceptions.CustomException;
 import com.example.cryptotrading.model.BinanceTicker;
 import com.example.cryptotrading.model.HuobiPriceResponse;
 import com.example.cryptotrading.model.HuobiTicker;
@@ -42,6 +42,10 @@ public class PriceServiceImpl implements PriceService {
 						.build())
 				.build();
 	}
+	
+	/*
+	 * Task 1: 10 seconds interval scheduler to retrieve the pricing from the source above and store the best pricing into the database.
+	 */
 
 	@Override
 	@Scheduled(fixedRate = 10000) // 10 seconds interval
@@ -52,8 +56,6 @@ public class PriceServiceImpl implements PriceService {
 	}
 
 	public BinanceTicker[] fetchFromBinance() {
-		// OBject set object
-		
 		
 		logger.info("Fetching prices from Binance...");
 
@@ -104,22 +106,22 @@ public class PriceServiceImpl implements PriceService {
 		for (BinanceTicker bTicker : binanceResponse) {
 			if (bTicker.getSymbol().equalsIgnoreCase("ethusdt")) {
 				logger.info("Response from Binance for ETHUSDT >>> Bid = {} ASK = {}", bTicker.getBidPrice(),bTicker.getAskPrice());
-				ethPrices.add(new Price("Binance", "ETHUSDT", Double.parseDouble(bTicker.getBidPrice()), Double.parseDouble(bTicker.getAskPrice())));
+				ethPrices.add(new Price("ETHUSDT", Double.parseDouble(bTicker.getBidPrice()), Double.parseDouble(bTicker.getAskPrice())));
 	
-			} else if (bTicker.getSymbol().equalsIgnoreCase("BTCUSDT")) {
+			} else if (bTicker.getSymbol().equalsIgnoreCase("btcusdt")) {
 				logger.info("Response from Binance for BTCUSDT >>> Bid = {} ASK = {}", bTicker.getBidPrice(),bTicker.getAskPrice());
-				btcPrices.add(new Price("Binance", "BTCUSDT", Double.parseDouble(bTicker.getBidPrice()), Double.parseDouble(bTicker.getAskPrice())));
+				btcPrices.add(new Price("BTCUSDT", Double.parseDouble(bTicker.getBidPrice()), Double.parseDouble(bTicker.getAskPrice())));
 			}
 		}
 		
 		for (HuobiTicker hTicker : Huobiresponse.getData()) {
 			if (hTicker.getSymbol().equalsIgnoreCase("ethusdt")) {
 				logger.info("Response from Huobi for ETHUSDT >>> Bid = {} ASK = {}", hTicker.getBid(),hTicker.getAsk());
-				ethPrices.add(new Price("Huobi", "ETHUSDT", Double.parseDouble(hTicker.getBid()), Double.parseDouble(hTicker.getAsk())));
+				ethPrices.add(new Price("ETHUSDT", Double.parseDouble(hTicker.getBid()), Double.parseDouble(hTicker.getAsk())));
 
 			} else if (hTicker.getSymbol().equalsIgnoreCase("btcusdt")) {
 				logger.info("Response from Huobi for BTCUSDT >>> Bid = {} ASK = {}", hTicker.getBid(),hTicker.getAsk());
-				btcPrices.add(new Price("Huobi", "BTCUSDT", Double.parseDouble(hTicker.getBid()), Double.parseDouble(hTicker.getAsk())));
+				btcPrices.add(new Price("BTCUSDT", Double.parseDouble(hTicker.getBid()), Double.parseDouble(hTicker.getAsk())));
 			}
 		}
 	
@@ -128,11 +130,11 @@ public class PriceServiceImpl implements PriceService {
 		Price bestEthAskPrice = ethPrices.stream().min(Comparator.comparing(Price::getAskPrice)).orElse(null);
 
 		if (bestEthAskPrice != null && bestEthBidPrice != null) {
-			logger.info("Best ETH Price >>> Bid = {} FROM {} ", bestEthBidPrice.getBidPrice(),bestEthBidPrice.getExchange());
-			logger.info("Best ETH Price >>> ASK = {} FROM {}", bestEthAskPrice.getAskPrice(),bestEthAskPrice.getExchange());
+			logger.info("Best ETH Price >>> Bid = {} FROM {} ", bestEthBidPrice.getBidPrice());
+			logger.info("Best ETH Price >>> ASK = {} FROM {}", bestEthAskPrice.getAskPrice());
 			
-			savePrice(bestEthBidPrice);
-			savePrice(bestEthAskPrice);
+			savePrice(bestEthBidPrice.getBidPrice(),bestEthAskPrice.getAskPrice(),"ETHUSDT");
+		
 		}
 		
 		// Find best BTC Price
@@ -140,31 +142,36 @@ public class PriceServiceImpl implements PriceService {
 		Price bestBtcAskPrice = btcPrices.stream().min(Comparator.comparing(Price::getAskPrice)).orElse(null);
 
 		if (bestBtcAskPrice != null && bestBtcBidPrice != null) {
-			logger.info("Best BTC Price >>> Bid = {} FROM {}", bestBtcBidPrice.getBidPrice(),bestBtcBidPrice.getExchange());
-			logger.info("Best BTC Price >>> ASK = {} FROM {}", bestBtcAskPrice.getAskPrice(),bestBtcBidPrice.getExchange());
+			logger.info("Best BTC Price >>> Bid = {} FROM {}", bestBtcBidPrice.getBidPrice());
+			logger.info("Best BTC Price >>> ASK = {} FROM {}", bestBtcAskPrice.getAskPrice());
 			
-			savePrice(bestBtcBidPrice);
-			savePrice(bestBtcAskPrice);
+			savePrice(bestBtcBidPrice.getBidPrice() ,bestBtcAskPrice.getAskPrice(),"BTCUSDT");
 		}
 	}
 	
-	private void savePrice(Price bestPrice) {
-		
+	private void savePrice(Double bestBidPrice, Double bestAskPrice, String tradePair) {
+		Price bestPrice = new Price();
+		bestPrice.setBidPrice(bestBidPrice);
+		bestPrice.setAskPrice(bestAskPrice);
+		bestPrice.setTradePair(tradePair);
 		bestPrice.setTimestamp(LocalDateTime.now());
+		
 		logger.info("Saving Best Prices >>> {}",bestPrice);
 		priceRepository.save(bestPrice);
 	}
 
 	public Price getBestPrice(String tradePair) {
-		Optional<Price> prices = priceRepository.findTopByTradePairOrderByTimestampDesc(tradePair);
 		
+		Price price = priceRepository.findTopByTradePairOrderByTimestampDesc(tradePair)
+				.orElseThrow(() -> new CustomException("price for trade pair not available."));
+
 		
-		logger.info("Best Price TradePair = {} BestPrice = {} ...",tradePair,prices.get());
+		logger.info("Best Price TradePair = {} BestPrice = {}",tradePair,price);
 
 		Price bestPrice = new Price();
 		bestPrice.setTradePair(tradePair);
-		bestPrice.setBidPrice(prices.get().getBidPrice());
-		bestPrice.setAskPrice(prices.get().getAskPrice());
+		bestPrice.setBidPrice(price.getBidPrice());
+		bestPrice.setAskPrice(price.getAskPrice());
 
 		return bestPrice;
 	}
