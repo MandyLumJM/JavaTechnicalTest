@@ -21,7 +21,8 @@ public class TradeRequest {
 	private Double amount;
 	private String tradeType;
 	private LocalDateTime localDateTime;
-	private String currency;
+	private String baseCurrency;
+	private String quoteCurrency;
 	
 	public String getTradePair() {
 		return tradePair;
@@ -53,11 +54,20 @@ public class TradeRequest {
 	public void setId(Long id) {
 		this.id = id;
 	}
-	public String getCurrency() {
-		return currency;
+	public String getBaseCurrency() {
+		return baseCurrency;
 	}
-	public void setCurrency(String currency) {
-		this.currency = currency;
+	public void setBaseCurrency(String baseCurrency) {
+		this.baseCurrency = baseCurrency;
 	}
+	public String getQuoteCurrency() {
+		return quoteCurrency;
+	}
+	public void setQuoteCurrency(String quoteCurrency) {
+		this.quoteCurrency = quoteCurrency;
+	}
+
+	
+	
 
 }

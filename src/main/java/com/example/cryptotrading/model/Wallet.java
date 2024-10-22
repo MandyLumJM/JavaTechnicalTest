@@ -12,7 +12,7 @@ public class Wallet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 	
-	@Column(name = "currency", nullable = false)
+	@Column(name = "currency", nullable = false, unique = true)
     private String currency;
     
     @Column(name = "balance", nullable = false)

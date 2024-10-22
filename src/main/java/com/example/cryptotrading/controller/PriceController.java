@@ -16,7 +16,7 @@ public class PriceController {
     @Autowired
     private PriceService priceService;
 
-    @GetMapping("/best-price")
+    @GetMapping("/bestprice")
     public Price getBestPrice(@RequestParam String tradePair) {
 
     	Price bestPrice = priceService.getBestPrice(tradePair);

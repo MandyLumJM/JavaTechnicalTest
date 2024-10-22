@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import com.example.cryptotrading.Exceptions.CustomException;
-import com.example.cryptotrading.model.BinancePriceResponse;
+
 import com.example.cryptotrading.model.Price;
 import com.example.cryptotrading.model.Trade;
 import com.example.cryptotrading.model.TradeRequest;
@@ -33,7 +33,6 @@ import com.example.cryptotrading.repository.WalletRepository;
 
 @Service
 public class TradeServiceImpl implements TradeService {
-	// REST APIs to handle buy/sell trades.
 
 	private static final Logger logger = LoggerFactory.getLogger(TradeService.class);
 
@@ -47,7 +46,7 @@ public class TradeServiceImpl implements TradeService {
 	private UserRepository userRepository;
 
 	@Autowired
-	private PriceRepository priceRepository; // Inject the PriceRepository
+	private PriceRepository priceRepository;
 
 	/*
 	 * Trade Execution logic (BUY/SELL) with latest price 
@@ -55,31 +54,35 @@ public class TradeServiceImpl implements TradeService {
 	@Transactional
 	@Override
 	public Trade processTrade(Long userId, TradeRequest tradeRequest) {
-		logger.info("TradeServiceImpl Entering processTrade >>> {} {} ", tradeRequest.getTradeType(), tradeRequest.getCurrency());
+		logger.info("TradeServiceImpl Entering processTrade >>> TradeType = {} Based = {} Quote = {} ", tradeRequest.getTradeType(), tradeRequest.getBaseCurrency(),tradeRequest.getQuoteCurrency());
 
 		try {
-			Double currentPrice = 0.0;
 
 			Price latestPrice = priceRepository.findTopByTradePairOrderByTimestampDesc(tradeRequest.getTradePair())
 					.orElseThrow(() -> new CustomException("Latest price for trade pair not available."));
 
 			User user = userRepository.findById(userId).orElseThrow(() -> new CustomException("User not found."));
 
-			Wallet wallet = walletRepository.findByUserIdAndCurrency(userId, tradeRequest.getCurrency())
+			Wallet baseCurrency = walletRepository.findByUserIdAndCurrency(userId, tradeRequest.getBaseCurrency())
 					.orElseThrow(() -> new CustomException(
-							"User wallet for currency " + tradeRequest.getCurrency() + " not found."));
+							"User wallet for currency " + tradeRequest.getBaseCurrency() + " not found."));
+			
+			Wallet quoteCurrency = walletRepository.findByUserIdAndCurrency(userId, tradeRequest.getQuoteCurrency())
+					.orElseThrow(() -> new CustomException(
+							"User wallet for currency " + tradeRequest.getQuoteCurrency() + " not found."));
 
-			if (wallet == null) {
+			if (baseCurrency == null && quoteCurrency == null) {
 				throw new CustomException("User wallet not found.");
 			}
+			
 
 			double tradePrice = determineTradePrice(tradeRequest.getTradeType(), latestPrice);
 			double totalTradeCost = tradeRequest.getAmount() * tradePrice;
-
+			
+			// Check if wallet has sufficient funds
 			if (tradeRequest.getTradeType().equalsIgnoreCase("buy")) {
-				currentPrice = latestPrice.getAskPrice();
-
-				if (wallet.getBalance() < totalTradeCost) {
+				logger.info("TradeServiceImpl processTrade >>> TotalCost = {} Balance = {} ", totalTradeCost, quoteCurrency.getBalance());
+				if (quoteCurrency.getBalance() < totalTradeCost) {
 					throw new CustomException("Insufficient wallet balance to execute the trade.");
 				}
 			}
@@ -88,28 +91,15 @@ public class TradeServiceImpl implements TradeService {
 			trade.setUserId(userId);
 			trade.setTradePair(tradeRequest.getTradePair());
 			trade.setAmount(tradeRequest.getAmount());
-			trade.setPrice(currentPrice);
+			trade.setPrice(tradePrice);
 			trade.setTradeType(tradeRequest.getTradeType());
 			trade.setTransactionTime(LocalDateTime.now());
-
+			
 			Trade savedTrade = tradeRepository.save(trade);
 
-			if (savedTrade != null && savedTrade.getId() != null) {
-				if (trade.getTradeType().equalsIgnoreCase("buy")) {
-					wallet.setBalance(wallet.getBalance() - totalTradeCost);
-					user.setWalletBalance(user.getWalletBalance() - totalTradeCost);
-				} else if (trade.getTradeType().equalsIgnoreCase("sell")) {
-					wallet.setBalance(wallet.getBalance() + (trade.getAmount() * trade.getPrice()));
-					user.setWalletBalance(user.getWalletBalance() + (trade.getAmount() * trade.getPrice()));
-				}
-				walletRepository.save(wallet);
-				userRepository.save(user);
-
-			} else {
-				throw new CustomException("Failed to save the trade. Transaction aborted.");
-			}
-			logger.info("TradeServiceImpl Exiting processTrade >>> {} {} ", tradeRequest.getTradeType(), tradeRequest.getCurrency());
+			updateWallet(savedTrade,baseCurrency,quoteCurrency,totalTradeCost,user,tradeRequest);
 			
+			logger.info("TradeServiceImpl Exiting processTrade >>>>>>");
 			return savedTrade;
 
 		} catch (DataIntegrityViolationException e) {
@@ -125,13 +115,37 @@ public class TradeServiceImpl implements TradeService {
 		logger.info("TradeServiceImpl determineTradePrice >>> {} {} ", tradeType, latestPrice);
 		return tradeType.equalsIgnoreCase("buy") ? latestPrice.getAskPrice() : latestPrice.getBidPrice();
 	}
+	
+	private void updateWallet(Trade savedTrade, Wallet baseCurrency, Wallet quoteCurrency, double totalTradeCost, User user, TradeRequest tradeRequest) {
+		logger.info("TradeServiceImpl updateWallet >>>");
+		if (savedTrade != null && savedTrade.getId() != null) {
+			if (savedTrade.getTradeType().equalsIgnoreCase("buy")) {
+				baseCurrency.setBalance(baseCurrency.getBalance() + tradeRequest.getAmount());
+				quoteCurrency.setBalance(quoteCurrency.getBalance() - totalTradeCost);
+				
+				user.setWalletBalance(user.getWalletBalance() - totalTradeCost);
+				
+			} else if (savedTrade.getTradeType().equalsIgnoreCase("sell")) {
+				baseCurrency.setBalance(baseCurrency.getBalance() - tradeRequest.getAmount());
+				quoteCurrency.setBalance(quoteCurrency.getBalance() + totalTradeCost);
+				user.setWalletBalance(user.getWalletBalance() + totalTradeCost);
+				
+			}
+			walletRepository.save(quoteCurrency);
+			walletRepository.save(baseCurrency);
+			userRepository.save(user);
+
+		} else {
+			throw new CustomException("Failed to save the trade. Transaction aborted.");
+		}
+	}
 
 	/*
 	 * Fetch Trades
 	 */
 	@Override
 	public List<Trade> fetchTradeHistory(Long userId) {
-		
+		logger.info("TradeServiceImpl fetchTradeHistory >>> {}", userId);
 		List<Trade> tradeList = tradeRepository.findByUserId(userId);
 		return tradeList;
 	}

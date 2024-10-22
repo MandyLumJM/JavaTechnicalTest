@@ -1,29 +1,32 @@
 package com.example.cryptotrading.model;
 
-public class BinancePriceResponse {
-	
+import lombok.Data;
+
+@Data
+public class BinanceTicker {
+
 	private String symbol;
+	private String bidPrice;
 	private String bidQty;
-    private String bidPrice;
-    private String askPrice;
-    private String askQty;
+	private String askPrice;
+	private String askQty;
 	public String getSymbol() {
 		return symbol;
 	}
 	public void setSymbol(String symbol) {
 		this.symbol = symbol;
 	}
-	public String getBidQty() {
-		return bidQty;
-	}
-	public void setBidQty(String bidQty) {
-		this.bidQty = bidQty;
-	}
 	public String getBidPrice() {
 		return bidPrice;
 	}
 	public void setBidPrice(String bidPrice) {
 		this.bidPrice = bidPrice;
+	}
+	public String getBidQty() {
+		return bidQty;
+	}
+	public void setBidQty(String bidQty) {
+		this.bidQty = bidQty;
 	}
 	public String getAskPrice() {
 		return askPrice;
@@ -37,7 +40,8 @@ public class BinancePriceResponse {
 	public void setAskQty(String askQty) {
 		this.askQty = askQty;
 	}
-    
-    
+	
+	
+	
 	
 }
