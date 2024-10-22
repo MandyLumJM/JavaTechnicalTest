@@ -19,8 +19,6 @@ import com.example.cryptotrading.model.User;
 import com.example.cryptotrading.model.Wallet;
 import com.example.cryptotrading.service.TradeService;
 
-import io.netty.handler.codec.http.LastHttpContent;
-
 import com.example.cryptotrading.repository.PriceRepository;
 import com.example.cryptotrading.repository.TradeRepository;
 import com.example.cryptotrading.repository.UserRepository;

@@ -6,20 +6,27 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "PRICE")
 public class Price {
-   
 
 	@Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    private String exchange; 
-    private String tradePair; 
-    private Double bidPrice; 
-    private Double askPrice; 
+	@Column(name = "exchange", nullable = false)
+	private String exchange;
+	
+	@Column(name = "tradePair", nullable = false)
+	private String tradePair;
+	
+	@Column(name = "bidPrice", nullable = false)
+	private Double bidPrice;
+	
+	@Column(name = "askPrice", nullable = false)
+	private Double askPrice;
 
-    private LocalDateTime timestamp; 
-    
-    public Long getId() {
+	@Column(name = "timestamp", nullable = false)
+	private LocalDateTime timestamp;
+
+	public Long getId() {
 		return id;
 	}
 
@@ -65,6 +72,23 @@ public class Price {
 
 	public void setTimestamp(LocalDateTime timestamp) {
 		this.timestamp = timestamp;
+	}
+
+	@Override
+	public String toString() {
+		return "Price [id=" + id + ", exchange=" + exchange + ", tradePair=" + tradePair + ", bidPrice=" + bidPrice
+				+ ", askPrice=" + askPrice + ", timestamp=" + timestamp + "]";
+	}
+
+	public Price(String exchange, String tradePair, Double bidPrice, Double askPrice) {
+		this.exchange = exchange;
+		this.tradePair = tradePair;
+		this.bidPrice = bidPrice;
+		this.askPrice = askPrice;
+	}
+
+	public Price() {
+		// TODO Auto-generated constructor stub
 	}
 
 }

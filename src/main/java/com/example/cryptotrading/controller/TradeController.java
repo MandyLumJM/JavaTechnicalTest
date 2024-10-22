@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.cryptotrading.model.Trade;
 import com.example.cryptotrading.model.TradeRequest;
 import com.example.cryptotrading.service.TradeService;
-import com.example.cryptotrading.service.impl.PriceServiceImpl;
 
 /*
  * Process Trade API

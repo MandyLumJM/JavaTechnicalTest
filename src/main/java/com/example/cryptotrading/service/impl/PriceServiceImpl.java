@@ -1,7 +1,10 @@
 package com.example.cryptotrading.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -28,6 +31,8 @@ public class PriceServiceImpl implements PriceService {
 	private PriceRepository priceRepository;
 
 	private WebClient webClient = WebClient.create();
+	
+	
 
 	// Increase webClient memory to handle larger response load
 	public PriceServiceImpl(WebClient.Builder webClientBuilder) {
@@ -41,11 +46,15 @@ public class PriceServiceImpl implements PriceService {
 	@Override
 	@Scheduled(fixedRate = 10000) // 10 seconds interval
 	public void fetchPrices() {
-		fetchFromBinance();
-		fetchFromHuobi();
+		BinanceTicker[] binanceResponse = fetchFromBinance();
+		HuobiPriceResponse Huobiresponse = fetchFromHuobi();
+		findBestPrices(binanceResponse,Huobiresponse);
 	}
 
-	public void fetchFromBinance() {
+	public BinanceTicker[] fetchFromBinance() {
+		// OBject set object
+		
+		
 		logger.info("Fetching prices from Binance...");
 
 		String url = "/api/v3/ticker/bookTicker";
@@ -55,26 +64,17 @@ public class PriceServiceImpl implements PriceService {
 			if (response == null || response.length == 0) {
 				logger.warn("Received null or empty response from Binance API");
 			} else {
-				for (BinanceTicker ticker : response) {
-					if (ticker.getSymbol().equalsIgnoreCase("ETHUSDT")) {
-						logger.info("Response from Binance for ETHUSDT >>> Bid = {} ASK = {}", ticker.getBidPrice(),
-								ticker.getAskPrice());
-						savePrice("Binance", "ETHUSDT", ticker.getBidPrice(), ticker.getAskPrice());
-					} else if (ticker.getSymbol().equalsIgnoreCase("BTCUSDT")) {
-						logger.info("Response from Binance for BTCUSDT >>> Bid = {} ASK = {}", ticker.getBidPrice(),
-								ticker.getAskPrice());
-						savePrice("Binance", "BTCUSDT", ticker.getBidPrice(), ticker.getAskPrice());
-					}
-				}
+				return response;
 			}
 		} catch (WebClientResponseException e) {
 			logger.error("Error fetching data from Binance API: {}", e.getMessage(), e);
 		} catch (Exception e) {
 			logger.error("Unexpected error: {}", e.getMessage(), e);
 		}
+		return null;
 	}
 
-	private void fetchFromHuobi() {
+	private HuobiPriceResponse fetchFromHuobi() {
 		logger.info("Fetching prices from Huobi...");
 
 		String url = "https://api.huobi.pro/market/tickers";
@@ -85,49 +85,86 @@ public class PriceServiceImpl implements PriceService {
 			if (response == null || response.getData() == null || response.getData().isEmpty()) {
 				logger.warn("Received null or empty response from Huobi API");
 			} else {
-				for (HuobiTicker ticker : response.getData()) {
-					if (ticker.getSymbol().equalsIgnoreCase("ethusdt")) {
-						logger.info("Response from Huobi for ETHUSDT >>> Bid = {} ASK = {}", ticker.getBid(),
-								ticker.getAsk());
-						savePrice("Huobi", "ETHUSDT", ticker.getBid(), ticker.getAsk());
-					} else if (ticker.getSymbol().equalsIgnoreCase("btcusdt")) {
-						logger.info("Response from Huobi for BTCUSDT >>> Bid = {} ASK = {}", ticker.getBid(),
-								ticker.getAsk());
-						savePrice("Huobi", "BTCUSDT", ticker.getBid(), ticker.getAsk());
-					}
-				}
+				return response;
 			}
 		} catch (WebClientResponseException e) {
 			logger.error("Error fetching data from Huobi API: {}", e.getMessage(), e);
 		} catch (Exception e) {
 			logger.error("Unexpected error: {}", e.getMessage(), e);
 		}
+		return null;
 
 	}
+	
+	private void findBestPrices(BinanceTicker[] binanceResponse, HuobiPriceResponse Huobiresponse) {
+		
+		List<Price> ethPrices = new ArrayList<>();
+		List<Price> btcPrices = new ArrayList<>();
 
-	private void savePrice(String exchange, String tradePair, String bidPrice, String askPrice) {
-		Price price = new Price();
-		price.setExchange(exchange);
-		price.setTradePair(tradePair);
-		price.setBidPrice(Double.parseDouble(bidPrice));
-		price.setAskPrice(Double.parseDouble(askPrice));
-		price.setTimestamp(LocalDateTime.now());
+		for (BinanceTicker bTicker : binanceResponse) {
+			if (bTicker.getSymbol().equalsIgnoreCase("ethusdt")) {
+				logger.info("Response from Binance for ETHUSDT >>> Bid = {} ASK = {}", bTicker.getBidPrice(),bTicker.getAskPrice());
+				ethPrices.add(new Price("Binance", "ETHUSDT", Double.parseDouble(bTicker.getBidPrice()), Double.parseDouble(bTicker.getAskPrice())));
+	
+			} else if (bTicker.getSymbol().equalsIgnoreCase("BTCUSDT")) {
+				logger.info("Response from Binance for BTCUSDT >>> Bid = {} ASK = {}", bTicker.getBidPrice(),bTicker.getAskPrice());
+				btcPrices.add(new Price("Binance", "BTCUSDT", Double.parseDouble(bTicker.getBidPrice()), Double.parseDouble(bTicker.getAskPrice())));
+			}
+		}
+		
+		for (HuobiTicker hTicker : Huobiresponse.getData()) {
+			if (hTicker.getSymbol().equalsIgnoreCase("ethusdt")) {
+				logger.info("Response from Huobi for ETHUSDT >>> Bid = {} ASK = {}", hTicker.getBid(),hTicker.getAsk());
+				ethPrices.add(new Price("Huobi", "ETHUSDT", Double.parseDouble(hTicker.getBid()), Double.parseDouble(hTicker.getAsk())));
 
-		priceRepository.save(price);
+			} else if (hTicker.getSymbol().equalsIgnoreCase("btcusdt")) {
+				logger.info("Response from Huobi for BTCUSDT >>> Bid = {} ASK = {}", hTicker.getBid(),hTicker.getAsk());
+				btcPrices.add(new Price("Huobi", "BTCUSDT", Double.parseDouble(hTicker.getBid()), Double.parseDouble(hTicker.getAsk())));
+			}
+		}
+	
+		// Find best ETH Price
+		Price bestEthBidPrice = ethPrices.stream().max(Comparator.comparing(Price::getBidPrice)).orElse(null);
+		Price bestEthAskPrice = ethPrices.stream().min(Comparator.comparing(Price::getAskPrice)).orElse(null);
+
+		if (bestEthAskPrice != null && bestEthBidPrice != null) {
+			logger.info("Best ETH Price >>> Bid = {} FROM {} ", bestEthBidPrice.getBidPrice(),bestEthBidPrice.getExchange());
+			logger.info("Best ETH Price >>> ASK = {} FROM {}", bestEthAskPrice.getAskPrice(),bestEthAskPrice.getExchange());
+			
+			savePrice(bestEthBidPrice);
+			savePrice(bestEthAskPrice);
+		}
+		
+		// Find best BTC Price
+		Price bestBtcBidPrice = btcPrices.stream().max(Comparator.comparing(Price::getBidPrice)).orElse(null);
+		Price bestBtcAskPrice = btcPrices.stream().min(Comparator.comparing(Price::getAskPrice)).orElse(null);
+
+		if (bestBtcAskPrice != null && bestBtcBidPrice != null) {
+			logger.info("Best BTC Price >>> Bid = {} FROM {}", bestBtcBidPrice.getBidPrice(),bestBtcBidPrice.getExchange());
+			logger.info("Best BTC Price >>> ASK = {} FROM {}", bestBtcAskPrice.getAskPrice(),bestBtcBidPrice.getExchange());
+			
+			savePrice(bestBtcBidPrice);
+			savePrice(bestBtcAskPrice);
+		}
+	}
+	
+	private void savePrice(Price bestPrice) {
+		
+		bestPrice.setTimestamp(LocalDateTime.now());
+		logger.info("Saving Best Prices >>> {}",bestPrice);
+		priceRepository.save(bestPrice);
 	}
 
 	public Price getBestPrice(String tradePair) {
-		List<Price> prices = priceRepository.findByTradePair(tradePair);
-
-		Double bestAsk = prices.stream().mapToDouble(Price::getAskPrice).min().orElse(0);
-		Double bestBid = prices.stream().mapToDouble(Price::getBidPrice).max().orElse(0);
-
-		logger.info("Best Price TradePair = {} Bid = {} Ask = {} ...");
+		Optional<Price> prices = priceRepository.findTopByTradePairOrderByTimestampDesc(tradePair);
+		
+		
+		logger.info("Best Price TradePair = {} BestPrice = {} ...",tradePair,prices.get());
 
 		Price bestPrice = new Price();
 		bestPrice.setTradePair(tradePair);
-		bestPrice.setAskPrice(bestAsk);
-		bestPrice.setBidPrice(bestBid);
+		bestPrice.setBidPrice(prices.get().getBidPrice());
+		bestPrice.setAskPrice(prices.get().getAskPrice());
 
 		return bestPrice;
 	}

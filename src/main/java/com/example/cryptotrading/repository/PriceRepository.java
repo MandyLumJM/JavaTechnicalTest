@@ -14,6 +14,4 @@ public interface PriceRepository extends JpaRepository<Price, Long> {
 	
 	Optional<Price> findTopByTradePairOrderByTimestampDesc(String tradePair);
 
-	List<Price> findByTradePair(String tradePair);
-
 }

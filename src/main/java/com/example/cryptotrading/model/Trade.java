@@ -10,11 +10,23 @@ public class Trade {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+	
+	@Column(name = "tradePair", nullable = false)
 	private String tradePair;
+	
+	@Column(name = "amount", nullable = false)
 	private Double amount;
+	
+	@Column(name = "price", nullable = false)
 	private Double price;
+	
+	@Column(name = "TradeType", nullable = false)
 	private String TradeType; 
+	
+	@Column(name = "transactionTime", nullable = false)
 	private LocalDateTime transactionTime;
+	
+	@Column(name = "userId", nullable = false)
 	private Long userId;
 	
 	public Long getId() {

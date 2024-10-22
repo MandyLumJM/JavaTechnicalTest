@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.cryptotrading.model.Wallet;
-import com.example.cryptotrading.service.TradeService;
 import com.example.cryptotrading.service.WalletService;
 
 /*
