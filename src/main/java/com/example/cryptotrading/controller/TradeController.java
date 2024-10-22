@@ -30,18 +30,18 @@ public class TradeController {
 	@Autowired
 	TradeService tradeService;
 
-	
 	@PostMapping("/processtrade")
     public ResponseEntity<Trade> processTrade(@RequestParam Long userId, @RequestBody TradeRequest tradeRequest) {
-		logger.info("TradeController Entering processTrade...");
-        Trade savedTrade = tradeService.processTrade(userId, tradeRequest);
+		logger.info("TradeController processTrade...");
 		
+        Trade savedTrade = tradeService.processTrade(userId, tradeRequest);
         return ResponseEntity.ok(savedTrade);
     }
 	
 	@GetMapping("/history")
 	public ResponseEntity<List<Trade>> fetchTradeHistory(@RequestParam Long userId) {
-		logger.info("TradeController Entering fetchTradeHistory...");
+		logger.info("TradeController fetchTradeHistory...");
+		
 		List<Trade> tradeList = tradeService.fetchTradeHistory(userId);
         return ResponseEntity.ok(tradeList);
     }

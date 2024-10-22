@@ -7,8 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.example.cryptotrading.Exceptions.CustomException;
-import com.example.cryptotrading.controller.WalletController;
 import com.example.cryptotrading.model.Wallet;
 import com.example.cryptotrading.repository.WalletRepository;
 import com.example.cryptotrading.service.WalletService;

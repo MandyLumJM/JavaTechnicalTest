@@ -1,16 +1,10 @@
 package com.example.cryptotrading.model;
 
 import java.time.LocalDateTime;
-
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Entity
-@NoArgsConstructor
-@Data
-@Table(name = "price")
+@Table(name = "PRICE")
 public class Price {
    
 

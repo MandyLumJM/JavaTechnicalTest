@@ -1,8 +1,5 @@
 package com.example.cryptotrading.model;
 
-import lombok.Data;
-
-@Data
 public class BinanceTicker {
 
 	private String symbol;
@@ -10,6 +7,7 @@ public class BinanceTicker {
 	private String bidQty;
 	private String askPrice;
 	private String askQty;
+	
 	public String getSymbol() {
 		return symbol;
 	}

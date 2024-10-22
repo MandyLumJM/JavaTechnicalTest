@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import com.example.cryptotrading.model.User;
 import com.example.cryptotrading.model.Wallet;
 
 public interface WalletRepository extends JpaRepository<Wallet, Long> {

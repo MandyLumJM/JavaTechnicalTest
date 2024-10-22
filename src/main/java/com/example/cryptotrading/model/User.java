@@ -2,14 +2,9 @@ package com.example.cryptotrading.model;
 
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
-@NoArgsConstructor
 @Entity
-@Table(name = "app_user") // user is a reserved keyword in H2 database 
+@Table(name = "APP_USER") // user is a reserved keyword in H2 database 
 public class User {
 	
 	@Id

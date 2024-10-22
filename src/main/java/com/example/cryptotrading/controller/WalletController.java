@@ -22,7 +22,6 @@ import com.example.cryptotrading.service.WalletService;
 @RestController
 @RequestMapping("/api/wallets")
 public class WalletController {
-	
 	private static final Logger logger = LoggerFactory.getLogger(WalletController.class);
 
     @Autowired
@@ -31,6 +30,8 @@ public class WalletController {
    
     @GetMapping("/balances")
     public ResponseEntity<List<Wallet>> getWalletBalance(@RequestParam Long userId) {
+    	logger.info("WalletController getWalletBalance...");
+    	
         List<Wallet> walletBalance = walletService.getWalletBalance(userId);
         return ResponseEntity.ok(walletBalance);
     }

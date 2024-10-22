@@ -11,9 +11,9 @@ import com.example.cryptotrading.model.Price;
 
 @Repository
 public interface PriceRepository extends JpaRepository<Price, Long> {
-
-	List<Price> findByTradePair(String tradePair);
 	
 	Optional<Price> findTopByTradePairOrderByTimestampDesc(String tradePair);
+
+	List<Price> findByTradePair(String tradePair);
 
 }

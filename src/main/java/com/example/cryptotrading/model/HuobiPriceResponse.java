@@ -2,9 +2,6 @@ package com.example.cryptotrading.model;
 
 import java.util.List;
 
-import lombok.Data;
-
-@Data
 public class HuobiPriceResponse {
 
 	private List<HuobiTicker> data;

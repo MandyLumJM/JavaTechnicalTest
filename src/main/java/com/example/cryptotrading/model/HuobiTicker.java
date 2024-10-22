@@ -1,9 +1,7 @@
 package com.example.cryptotrading.model;
 
-import lombok.Data;
-
-@Data
 public class HuobiTicker {
+	
     private String symbol;
     private String bid;
     private String ask;

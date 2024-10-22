@@ -1,6 +1,5 @@
 package com.example.cryptotrading.service.impl;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -10,10 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import com.example.cryptotrading.Exceptions.CustomException;
 
@@ -22,13 +17,14 @@ import com.example.cryptotrading.model.Trade;
 import com.example.cryptotrading.model.TradeRequest;
 import com.example.cryptotrading.model.User;
 import com.example.cryptotrading.model.Wallet;
-import com.example.cryptotrading.service.PriceService;
 import com.example.cryptotrading.service.TradeService;
+
+import io.netty.handler.codec.http.LastHttpContent;
+
 import com.example.cryptotrading.repository.PriceRepository;
 import com.example.cryptotrading.repository.TradeRepository;
 import com.example.cryptotrading.repository.UserRepository;
 import com.example.cryptotrading.repository.WalletRepository;
-
 
 
 @Service
@@ -112,7 +108,7 @@ public class TradeServiceImpl implements TradeService {
 	}
 
 	private double determineTradePrice(String tradeType, Price latestPrice) {
-		logger.info("TradeServiceImpl determineTradePrice >>> {} {} ", tradeType, latestPrice);
+		logger.info("TradeServiceImpl determineTradePrice >>> TradeType = {} Bid = {} Ask = {}", tradeType,latestPrice.getBidPrice(), latestPrice.getAskPrice());
 		return tradeType.equalsIgnoreCase("buy") ? latestPrice.getAskPrice() : latestPrice.getBidPrice();
 	}
 	
@@ -134,15 +130,12 @@ public class TradeServiceImpl implements TradeService {
 			walletRepository.save(quoteCurrency);
 			walletRepository.save(baseCurrency);
 			userRepository.save(user);
-
+			logger.info("TradeServiceImpl wallet updated >>>");
 		} else {
 			throw new CustomException("Failed to save the trade. Transaction aborted.");
 		}
 	}
 
-	/*
-	 * Fetch Trades
-	 */
 	@Override
 	public List<Trade> fetchTradeHistory(Long userId) {
 		logger.info("TradeServiceImpl fetchTradeHistory >>> {}", userId);
